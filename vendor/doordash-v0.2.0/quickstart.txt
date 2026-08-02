@@ -1,0 +1,76 @@
+DoorDash CLI installer
+======================
+
+This folder contains:
+
+  dd-cli-v0.2.0-darwin-arm64   The DoorDash CLI binary (macOS Apple Silicon)
+  install.sh                   Install script
+  quickstart.txt               This file
+  skills/                      Agent skills (can be installed with install.sh)
+  LICENSE.txt                  DoorDash CLI Access Terms of Service
+  THIRD_PARTY_NOTICES.txt      Open-source license attributions
+
+How to install
+--------------
+
+1. Open Terminal (Cmd + Space, type "Terminal", hit Enter).
+
+2. Type "cd " (with a space after it), then drag this folder from
+   Finder into the Terminal window. It will paste the full path.
+   Press Enter.
+
+3. Run the install script:
+
+     bash install.sh
+
+   This will:
+   - Copy the binary to ~/.local/bin/dd-cli
+   - Make it executable
+   - Remove the macOS quarantine warning
+
+4. Make sure ~/.local/bin is on your PATH. If "dd-cli --help" doesn't work
+   after installing, run this once and restart Terminal:
+
+     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+
+5. Sign in to DoorDash:
+
+     dd-cli login
+
+Done! Try "dd-cli --help" to see all available commands.
+
+Using with AI agents
+--------------------
+
+DoorDash CLI works best with Claude Code, Cursor, Codex, or other
+terminal-based AI agents. The installer places an agent skill file so
+your agent automatically knows about DoorDash CLI — no priming needed. Just
+start a session and ask for what you want.
+
+If you skipped skill install or use a different agent, copy the skill
+from this folder:
+
+  skills/dd-cli-usage/SKILL.md
+
+to your agent's skill directory. Common locations:
+
+  Claude Code:  ~/.claude/skills/dd-cli-usage/
+  Cursor:       ~/.cursor/skills/dd-cli-usage/
+  Codex:        ~/.agents/skills/dd-cli-usage/
+  OpenClaw:     ~/.openclaw/skills/dd-cli-usage/
+
+Example usage:
+
+  > Find sushi near me
+
+  Agent runs:
+    dd-cli search --query "sushi near me"
+
+  > Reorder my last meal but skip the drink
+
+  Agent runs:
+    dd-cli order history
+    dd-cli order reorder --order-uuid abc123-def456
+    dd-cli cart show --cart-uuid 789xyz
+    dd-cli cart remove-item --cart-uuid 789xyz --cart-item-id 42
+    dd-cli order checkout-url --cart-uuid 789xyz

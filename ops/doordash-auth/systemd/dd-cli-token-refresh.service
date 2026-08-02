@@ -1,0 +1,16 @@
+[Unit]
+Description=Renew the DoorDash CLI OAuth access token
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exedev
+Group=exedev
+Environment=HOME=/home/exedev
+Environment=PATH=/home/exedev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/bin/bash /home/exedev/workspace/ops/doordash-auth/background-token-refresh.sh
+TimeoutStartSec=5min
+
+[Install]
+WantedBy=multi-user.target

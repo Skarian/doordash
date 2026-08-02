@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$repo_dir"
+
+if [[ ! -x .venv/bin/pyinstaller ]]; then
+    echo "error: .venv is missing the Linux PyInstaller build environment" >&2
+    exit 1
+fi
+
+.venv/bin/pyinstaller \
+    --clean \
+    --noconfirm \
+    --onefile \
+    --name dd-cli \
+    --paths port/src \
+    --collect-submodules dd_cli \
+    --collect-all tzdata \
+    --hidden-import keyrings.alt.file \
+    port/launcher.py
+
+file dist/dd-cli
+sha256sum dist/dd-cli
+
+version_output="$(dist/dd-cli --version)"
+if [[ "$version_output" != "dd-cli, version 0.2.1" ]]; then
+    echo "error: candidate reported unexpected version: $version_output" >&2
+    exit 1
+fi
+echo "$version_output"

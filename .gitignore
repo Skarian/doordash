@@ -1,0 +1,15 @@
+# Local Linux build environment and generated PyInstaller state
+/.venv/
+/build/
+/dd-cli.spec
+
+# Environment-provided agent guidance, not part of this project
+/.agents/skills/exe-dev/
+
+# macOS archive metadata
+.DS_Store
+._*
+
+# Common local caches
+__pycache__/
+.pytest_cache/
