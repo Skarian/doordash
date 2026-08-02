@@ -1,59 +1,112 @@
-# Authentication workflows
+# DoorDash authentication on Linux servers
 
-These workflows add headless and mobile OAuth support around `dd-cli` on a
-normal Linux host. They have no hosting-provider dependency.
+These scripts run the DoorDash browser sign-in flow on a remote or headless
+Linux machine. They provide an interactive browser reachable from another
+device and a timer that renews authorization every 48 hours.
 
-## Dependencies
+## Requirements
 
-The mobile workflow requires:
+The interactive login requires:
 
-- Bash, systemd user services, `flock`, and `timeout`;
+- Bash, `flock`, and `timeout`;
+- a running systemd user manager, or foreground mode;
 - Chrome, Google Chrome, or Chromium;
-- Xvfb, Openbox, x11vnc, websockify, and xdotool;
-- `dd-cli` on `PATH`, or an explicit `DD_CLI_BIN` setting.
+- Xvfb, Openbox, x11vnc, websockify, and xdotool; and
+- `dd-cli` on `PATH`, or `DD_CLI_BIN` set to its absolute path.
 
-## Interactive mobile login
+## Sign in from another device
 
-Run:
+Run from the repository root:
 
 ```bash
 bash workflows/auth/mobile-login.sh
 ```
 
-The default listener is `0.0.0.0:6080` and the displayed URL uses the first
-detected LAN IPv4 address. There is no VNC password. Only expose this temporary
-desktop to a trusted network, VPN, or authenticated reverse proxy.
+Open the displayed URL on a phone or computer and complete the DoorDash login.
+Each launch replaces the previous login session, starts a fresh temporary
+desktop, and brings the current Chrome window to the foreground. The service
+closes 10 seconds after successful authentication and has a 15-minute maximum
+lifetime.
 
-Use `DD_MOBILE_BIND=127.0.0.1` for SSH port-forwarding-only operation. The OAuth
-callback itself always remains local to the browser running on the Linux host.
+The default listener is a passwordless noVNC session on `0.0.0.0:6080` and the
+displayed URL uses the first detected LAN IPv4 address. Restrict port 6080 to a
+trusted network, VPN, or authenticated reverse proxy.
 
-Each launch replaces the previous interactive service and browser. The service
-stops shortly after successful OAuth and is forcibly stopped after 15 minutes.
-Use `--foreground` on hosts without a running user systemd manager.
+Use foreground mode when a systemd user manager is unavailable:
 
-## Background renewal
+```bash
+bash workflows/auth/mobile-login.sh --foreground
+```
 
-DoorDash currently supplies a 72-hour access token without a refresh token.
-`background-renewal.sh` therefore performs another OAuth authorization in a
-private virtual display. A preserved browser identity session normally approves
-it without interaction.
+Check the current session with:
 
-Install the generic 48-hour user timer:
+```bash
+bash workflows/auth/mobile-login-status.sh
+```
+
+## Use an SSH tunnel
+
+Set the listener to loopback in `~/.config/dd-cli-linux/auth.conf`:
+
+```bash
+DD_MOBILE_BIND="127.0.0.1"
+```
+
+Forward the port from another computer:
+
+```bash
+ssh -L 6080:127.0.0.1:6080 user@server
+```
+
+Then open `http://127.0.0.1:6080/vnc.html?autoconnect=1&resize=scale`.
+
+## Renew authorization automatically
+
+DoorDash access tokens currently last 72 hours and require another OAuth
+authorization to renew. The renewal workflow opens the login flow in a private
+virtual display and uses the saved Chrome identity session for approval.
+
+Install and start the 48-hour user timer:
 
 ```bash
 bash workflows/auth/install-user-systemd.sh
 ```
 
-For the timer to run while the account is logged out, enable systemd user
-lingering according to your distribution's policy.
+Enable user lingering when the timer must run after logout:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
+Inspect the timer and its most recent service run with:
+
+```bash
+systemctl --user list-timers dd-cli-auth-renewal.timer --all
+systemctl --user status dd-cli-auth-renewal.service
+```
+
+Run the interactive login again if automatic approval needs attention.
 
 ## Configuration
 
-Configuration is sourced first from
-`~/.config/dd-cli-linux/auth.conf`, followed lexically by `*.conf` files under
-`~/.config/dd-cli-linux/auth.conf.d/`. This lets hosting integrations install a
-contained fragment while users retain a later local override.
-See `auth.conf.example` for the common settings.
+Start with [auth.conf.example](auth.conf.example). Settings are loaded in this
+order:
 
-State defaults to `~/.local/state/dd-cli-linux/`; runtime sockets, locks, and
-logs use `$XDG_RUNTIME_DIR` when available. Neither location belongs in Git.
+1. `~/.config/dd-cli-linux/auth.conf`
+2. `~/.config/dd-cli-linux/auth.conf.d/*.conf`, in lexical order
+
+Common settings include:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `DD_MOBILE_BIND` | `0.0.0.0` | noVNC listener address |
+| `DD_MOBILE_PORT` | `6080` | noVNC listener port |
+| `DD_MOBILE_PUBLIC_URL` | detected LAN URL | URL printed for the user |
+| `DD_MOBILE_MAX_SECONDS` | `900` | interactive session lifetime |
+| `DD_MOBILE_SUCCESS_GRACE_SECONDS` | `10` | delay before closing after login |
+| `DD_CLI_BIN` | discovered from `PATH` | DoorDash CLI executable |
+| `DD_CHROME_BIN` | automatically detected | Chrome or Chromium executable |
+
+State defaults to `~/.local/state/dd-cli-linux/`. Runtime sockets, locks, and
+logs use `$XDG_RUNTIME_DIR` when available. Keep the Chrome profile, keyring,
+and authentication logs restricted to the current user.

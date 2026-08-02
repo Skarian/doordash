@@ -1,72 +1,110 @@
-# DoorDash CLI on Linux
+# DoorDash CLI for Linux
 
-This repository provides an unofficial Linux packaging of DoorDash's official
-CLI payload plus provider-neutral authentication workflows for headless Linux
-servers.
+Use DoorDash from the command line to search restaurants and stores, browse
+menus, manage carts, place orders, and check delivery status.
 
-The Linux port, mobile browser, and token-renewal automation do not require a
-specific hosting provider. Optional integrations can supply deployment-specific
-URLs and service configuration without changing the core workflows.
+This repository packages DoorDash's official CLI for x86-64 Linux. It also
+includes login helpers for remote and headless servers.
 
-## Layout
+> This is an unofficial Linux distribution of the DoorDash CLI. A DoorDash
+> account with CLI access is required.
 
-- `port/` — Linux binary build inputs and compatibility launchers.
-- `workflows/auth/` — interactive OAuth, passwordless mobile noVNC, background
-  renewal, and generic user-level systemd units.
-- `integrations/` — optional hosting-provider configuration, including
-  `integrations/exe-dev/`.
-- `vendor/` — checksum-verified upstream releases used by the Linux port.
-- `dist/` — validated Linux CLI binary.
-- `.agents/skills/dd-cli-usage/` — DoorDash's agent usage instructions.
-- `preferences/` — persistent user ordering preferences.
+Current packaged version: `0.2.1`
 
-## CLI
+## Install
 
-The validated binary is available at `dist/dd-cli`. Install it somewhere on
-your `PATH`, then authenticate:
+From a checkout of this repository:
 
 ```bash
-install -m 755 dist/dd-cli "$HOME/.local/bin/dd-cli"
+install -Dm755 dist/dd-cli "$HOME/.local/bin/dd-cli"
+dd-cli --version
+```
+
+Make sure `$HOME/.local/bin` is on your `PATH`.
+
+## Sign in
+
+On a Linux desktop:
+
+```bash
 dd-cli login
 ```
 
-See `port/README.md` for build details and `DD_CLI_UPDATE.md` before importing a
-new upstream release.
+Complete the DoorDash sign-in flow in the browser, then use `dd-cli --help` to
+explore the available commands.
 
-## Mobile login on a Linux server
+## Sign in to a remote server
 
-The mobile workflow runs Chrome inside a temporary X display and exposes noVNC
-on the server's network interfaces:
+For a remote or headless server:
 
 ```bash
 bash workflows/auth/mobile-login.sh
 ```
 
-By default it advertises `http://<LAN-address>:6080/`. The noVNC layer is
-passwordless, so port 6080 must be limited to a trusted LAN, VPN, or
-authenticated reverse proxy. The session replaces any older login session,
-closes shortly after OAuth succeeds, and has a 15-minute maximum lifetime.
+Open the displayed URL from a phone or another computer and complete the
+DoorDash login. The temporary browser session closes after authentication and
+has a 15-minute maximum lifetime.
 
-Set values in `~/.config/dd-cli-linux/auth.conf` or ordered fragments under
-`~/.config/dd-cli-linux/auth.conf.d/`. Common settings include:
+Port 6080 provides a passwordless browser session. Restrict it to a trusted
+local network, VPN, or authenticated reverse proxy.
+
+See [workflows/auth/README.md](workflows/auth/README.md) for dependencies,
+configuration, SSH-forwarding mode, and troubleshooting.
+
+## Keep the session active
+
+DoorDash access tokens currently last 72 hours and require another OAuth
+authorization to renew. This repository includes a user-level systemd timer
+that reauthorizes every 48 hours using the saved browser session:
 
 ```bash
-DD_MOBILE_BIND="0.0.0.0"
-DD_MOBILE_PORT="6080"
-DD_MOBILE_PUBLIC_URL="https://door.example.net/"
-DD_MOBILE_MAX_SECONDS="900"
+bash workflows/auth/install-user-systemd.sh
 ```
 
-See `workflows/auth/README.md` for dependencies, loopback operation, and the
-48-hour user systemd timer.
+Run the interactive mobile login if automatic authorization needs attention.
 
-## Hosting integrations
+## Configuration
 
-Core workflows are hosting-provider neutral. Optional integrations currently
-include:
+Authentication settings live in:
 
-- `integrations/exe-dev/` — advertises the VM's authenticated HTTPS proxy URL
-  and enables the generic renewal timer.
+```text
+~/.config/dd-cli-linux/auth.conf
+~/.config/dd-cli-linux/auth.conf.d/*.conf
+```
 
-Runtime tokens and browser identity data are stored outside the repository in
-the user's XDG state/config directories.
+Start with
+[workflows/auth/auth.conf.example](workflows/auth/auth.conf.example).
+
+Runtime credentials and browser profiles live under the user's XDG data and
+state directories.
+
+## Building the Linux executable
+
+The Linux build combines the unchanged DoorDash application payload from the
+official release with a Linux-native CPython and PyInstaller runtime:
+
+```bash
+bash port/build.sh
+```
+
+Build details, dependencies, provenance, and keyring behavior are documented in
+[port/README.md](port/README.md).
+
+Before importing a newer DoorDash release, follow
+[DD_CLI_UPDATE.md](DD_CLI_UPDATE.md). It documents the checksum, payload
+verification, authentication-state boundaries, and validation checklist.
+
+## Integrations
+
+Integrations provide setup for particular hosting environments. Available
+integrations:
+
+- [exe.dev](integrations/exe-dev/README.md) — configures the authenticated HTTPS
+  proxy URL for remote login and installs the authorization-renewal timer.
+
+## Security
+
+On headless machines, the default launcher uses a file-based plaintext keyring.
+Keep its permissions restricted to the current user. Use a secure Linux keyring
+backend on shared or untrusted systems, and treat browser profiles and
+authentication logs as secrets.
