@@ -10,9 +10,9 @@ Version 0.2.1 splits the application across `dd_cli.commands`,
 `tzdata` runtime dependency. The build collects the complete `dd_cli` package
 and bundled timezone data so new command modules are not omitted.
 
-The launcher selects `keyrings.alt.file.PlaintextKeyring` because this
-throwaway, headless exe.dev VM has no desktop Secret Service. That backend is
-not appropriate for a persistent or shared machine. Set
+The launcher selects `keyrings.alt.file.PlaintextKeyring` for headless Linux
+systems without a desktop Secret Service. That backend is not appropriate for
+a shared machine. Set
 `PYTHON_KEYRING_BACKEND` to a secure Linux keyring backend to override it.
 
 Build:
@@ -35,13 +35,12 @@ Every 0.2.1 service command requires saved credentials and a leaf-level
 `--intent` value. Use the command's current `--help` output for its required
 two-line format and privacy guidance.
 
-VM-specific interactive login and automatic token renewal are intentionally
-owned by `ops/doordash-auth/`, outside this binary port. See:
+Provider-neutral interactive login and automatic token renewal are intentionally
+owned by `workflows/auth/`, outside this binary port. See:
 
 ```bash
-bash ops/doordash-auth/mobile-login.sh
+bash workflows/auth/mobile-login.sh
 ```
 
-`port/mobile-login.sh` remains only as a compatibility delegate. Operational
-details and systemd installation instructions live in
-`ops/doordash-auth/README.md`.
+`port/mobile-login.sh` remains only as a compatibility delegate. Workflow and
+systemd installation instructions live in `workflows/auth/README.md`.

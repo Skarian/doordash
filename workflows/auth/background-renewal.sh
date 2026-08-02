@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-runtime_dir="/tmp/dd-cli-background-refresh"
-display_number="98"
-display_name=":${display_number}"
-common_script="/home/exedev/workspace/ops/doordash-auth/oauth-session-common.sh"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/auth-common.sh"
+dd_load_auth_config
+dd_validate_auth_dependencies
 
-source "$common_script"
+runtime_dir="$DD_AUTH_RUNTIME_BASE/background"
+display_number="$DD_BACKGROUND_DISPLAY_NUMBER"
+display_name=":${display_number}"
 
 umask 077
 mkdir -p "$runtime_dir"
@@ -40,7 +42,7 @@ done
 env DISPLAY="$display_name" openbox >"$runtime_dir/openbox.log" 2>&1 &
 child_pids+=("$!")
 
-env DISPLAY="$display_name" google-chrome-stable \
+env DISPLAY="$display_name" "$DD_CHROME_BIN" \
     --no-sandbox \
     --disable-dev-shm-usage \
     --no-first-run \
@@ -52,8 +54,8 @@ env DISPLAY="$display_name" google-chrome-stable \
 child_pids+=("$!")
 
 sleep 2
-timeout --signal=TERM --kill-after=10s 180s \
-    env DISPLAY="$display_name" dd-cli login \
+timeout --signal=TERM --kill-after=10s "${DD_BACKGROUND_LOGIN_TIMEOUT_SECONDS}s" \
+    env DISPLAY="$display_name" "$DD_CLI_BIN" login \
     >"$runtime_dir/login.log" 2>&1
 
 echo "DoorDash access token renewed successfully."

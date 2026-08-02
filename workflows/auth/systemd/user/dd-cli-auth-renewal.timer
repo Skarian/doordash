@@ -5,7 +5,7 @@ Description=Renew the DoorDash CLI OAuth access token every 48 hours
 OnBootSec=10min
 OnUnitActiveSec=48h
 AccuracySec=1min
-Unit=dd-cli-token-refresh.service
+Unit=dd-cli-auth-renewal.service
 
 [Install]
 WantedBy=timers.target
