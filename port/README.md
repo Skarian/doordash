@@ -23,9 +23,10 @@ bash port/build.sh
 The build script creates `dist/dd-cli`, prints its file type and SHA-256
 checksum, and verifies that it reports the expected version.
 
-The [GitHub Actions workflow](../.github/workflows/build-linux.yml) performs the
-same build when a pull request or change to `main` affects the Linux port. It
-publishes a downloadable tarball with its SHA-256 checksum.
+The [GitHub Actions workflow](../.github/workflows/build-linux.yml) creates a
+GitHub Release when a `v<version>` tag is pushed. The tag must match the version
+in the upstream package metadata. Each release contains the Linux tarball and
+its SHA-256 checksum.
 
 ## Run
 
