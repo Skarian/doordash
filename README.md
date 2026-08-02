@@ -9,7 +9,8 @@ includes login helpers for remote and headless servers.
 > This is an unofficial Linux distribution of the DoorDash CLI. A DoorDash
 > account with CLI access is required.
 
-Current packaged version: `0.2.1`
+Linux artifacts use the same version number as the packaged upstream DoorDash
+CLI release.
 
 ## Install
 

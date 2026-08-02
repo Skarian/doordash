@@ -1,12 +1,20 @@
 # Build DoorDash CLI for Linux
 
 This directory contains the build inputs for the x86-64 Linux executable. The
-current build packages DoorDash CLI `0.2.1`.
+Linux build uses the version recorded in the upstream package metadata under
+`src/dd_cli-*.dist-info/`.
 
 ## Build
 
-The repository's `.venv` contains the Python 3.12 and PyInstaller build
-environment. From the repository root, run:
+Create the pinned Python 3.12 and PyInstaller build environment from the
+repository root:
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install --requirement port/requirements-build.txt
+```
+
+Then build the executable:
 
 ```bash
 bash port/build.sh
@@ -14,6 +22,10 @@ bash port/build.sh
 
 The build script creates `dist/dd-cli`, prints its file type and SHA-256
 checksum, and verifies that it reports the expected version.
+
+The [GitHub Actions workflow](../.github/workflows/build-linux.yml) performs the
+same build when a pull request or change to `main` affects the Linux port. It
+publishes a downloadable tarball with its SHA-256 checksum.
 
 ## Run
 
@@ -43,9 +55,9 @@ the official release.
 
 ## Command requirements
 
-DoorDash CLI `0.2.1` requires saved credentials and a leaf-level `--intent`
-value for service commands. Run the leaf command with `--help` for the current
-two-line intent format and privacy guidance.
+The packaged DoorDash CLI requires saved credentials and a leaf-level
+`--intent` value for service commands. Run the leaf command with `--help` for
+the current two-line intent format and privacy guidance.
 
 ## Credential storage
 
