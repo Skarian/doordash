@@ -1,5 +1,13 @@
 # Ordering Preferences
 
+## Restaurants to avoid
+
+- Never suggest or recommend Smokey Mo's BBQ.
+
+## Burgers
+
+- The user does not like pickles. Remove pickles from burgers by default.
+
 ## Bottled water
 
 - Do not select mini or 8 fl oz bottled water.
