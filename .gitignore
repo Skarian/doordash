@@ -1,15 +1,18 @@
-# Local Linux build environment and generated PyInstaller state
-/.venv/
-/build/
-/dd-cli.spec
-
 # Environment-provided agent guidance, not part of this project
 /.agents/skills/exe-dev/
 
-# macOS archive metadata
+# Platform metadata
 .DS_Store
 ._*
 
 # Common local caches
 __pycache__/
 .pytest_cache/
+
+# Credentials and downloaded release archives never belong in this repo
+.env
+.env.*
+access-token
+unlock-secret
+*.keyring
+*.tar.gz

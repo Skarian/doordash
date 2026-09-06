@@ -1,2 +1,0 @@
-[console_scripts]
-dd-cli = dd_cli.cli:cli
